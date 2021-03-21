@@ -4,22 +4,6 @@
 // import * as card from "./Cards.css"
 
 // Test Comment
-// Deck
-var myDeck = [];
-
-let player: HTMLDivElement;
-let dealer: HTMLDivElement;
-let playerPosition: HTMLDivElement;
-let dealerPosition: HTMLDivElement;
-let hitButton: HTMLDivElement;
-let stayButton: HTMLDivElement;
-
-let pName: HTMLDivElement;
-let dName: HTMLDivElement;
-
-let p2: Player2;
-let d2: Player2;
-
 
 enum PlayerAction
 {
@@ -39,58 +23,50 @@ enum HandState
 	Complete
 }
 
-let hState: HandState = HandState.NotStarted;
-
-
-class Player2 
+class PlayerHand
 {
-	hand = [];
-	lowTotal: number = 0;
+	cards = [];
+
 	handTotal: number = 0;
 	handHasAce: boolean = false;
-	name: string;
-	role: number = 0;
-	constructor(playerName: string, playerRole: number)
-	{
-		console.log("Built Player");
-		this.lowTotal = 0;
-		this.handTotal = 0;
-		this.name = playerName;
-		this.role = playerRole;
-	}
 	
+	displayParent: HTMLElement;
+	
+	constructor()
+	{
+		;
+	}
+
+    addDisplayPosition(dParent: HTMLElement)
+    {
+	   this.displayParent = dParent;
+    }
+
 	// Calculation is a mess right now.
 	addCardToHand(newCard: Card2)
 	{
 		console.log("Add Card to Hand");
-		this.hand.push(newCard);
-		if(newCard.value.numValue == 11)
-		{
-			this.lowTotal = this.lowTotal + 1;
-		}
-		else
-		{
-			this.lowTotal = this.lowTotal + newCard.value.numValue;
-		}
-		console.log("addCardToHand total = " + this.lowTotal);
+		this.cards.push(newCard);
+		this.displayParent.appendChild(newCard.el);  // Needs to be broken out into its own display method
+
 		this.handHasAce = false;
 		this.handTotal = 0
-		for(let i: number = 0; i < this.hand.length; i++)
+		for(let i: number = 0; i < this.cards.length; i++)
 		{
-			if(this.handHasAce == false && this.hand[i].value.numValue == 11)
+			if(this.handHasAce == false && this.cards[i].value.numValue == 11)
 			{
 				this.handTotal = this.handTotal + 11;
 				this.handHasAce = true;
 			}
 			else
 			{
-				if(this.hand[i].value.numValue == 11)
+				if(this.cards[i].value.numValue == 11)
 				{
 					this.handTotal = this.handTotal + 1;
 				}
 				else
 				{
-				   this.handTotal = this.handTotal + this.hand[i].value.numValue;
+				   this.handTotal = this.handTotal + this.cards[i].value.numValue;
 	            }
 			}
 		}
@@ -100,86 +76,166 @@ class Player2
 		}
 		console.log("Hand Total: " + this.handTotal)
 	}
+
 }
 
 
+class Player2 
+{
 
-let testDeck = new Deck("world!");
+	hands = [];
+
+	handHasAce: boolean = false;
+	name: string;
+	role: number = 0;
+	pElement: HTMLDivElement;
+	pPosition: HTMLDivElement;
+	pName: HTMLDivElement;
+	constructor(playerName: string, playerRole: number)
+	{
+		console.log("Built Player");
+
+		this.name = playerName;
+		this.role = playerRole;
+//		this.hands[0] = pHand;
+	}
+	
+	addHandToPlayer(pHand: PlayerHand)
+	{
+		this.hands.push(pHand);
+	}
+
+
+}
+
+enum CardFaceDirection
+{
+	Down,
+	Up
+}
+
+class BlackJackGame
+{
+	d2: Player2;   // Dealer
+	p2 = [];       // Array of Players
+	firstHand: boolean;
+	hState: HandState;
+	hitButton: HTMLDivElement;
+    stayButton: HTMLDivElement;
+    testDeck: Deck;
+	
+	constructor ()
+	{
+		this.firstHand = true;
+		this.hState = HandState.NotStarted;
+	}
+	
+	dealCard(pHand: PlayerHand, cFace: CardFaceDirection)
+	{
+
+	    let myCard: Card2 = this.testDeck.myDeck.pop();
+if(cFace == CardFaceDirection.Down)
+{
+   myCard.el.textContent = "CARD BACK";
+}
+	    pHand.addCardToHand(myCard);
+		
+	}
+	
+	createHitButton()
+	{
+  // Player area also contains a set of buttons with the player's options.
+  this.hitButton = document.createElement("input");
+  this.hitButton.setAttribute("type","button");
+  this.hitButton.setAttribute("id","hb1");
+  this.hitButton.setAttribute("class", "button")
+  this.hitButton.setAttribute("onclick","console.log('Hit Button'); executeHand(PlayerAction.Hit);");
+  this.hitButton.setAttribute("value","HIT BUTTON!");		
+	}
+	
+	createStayButton()
+	{
+		  // Player area also contains a set of buttons with the player's options.
+  this.stayButton = document.createElement("input");
+  this.stayButton.setAttribute("type","button");
+  this.stayButton.setAttribute("id","hb1");
+  this.stayButton.setAttribute("class", "button")
+  this.stayButton.setAttribute("onclick","console.log('Stay Button'); executeHand(PlayerAction.Stay);");
+  this.stayButton.setAttribute("value","Stay BUTTON!");
+	}
+}
+
+let bj1 = new BlackJackGame();
 
 // Create a game with one dealer and one player and the screen representation of the table
 function createBlackJackGame()
 {
 
-  d2 = new Player2("dealer", 1);
+  bj1.testDeck = new Deck("BJ1 Deck");
+
+  bj1.d2 = new Player2("dealer", 1);
 
   // Table contains a dealer area.
-  dealer = document.createElement("div");
-  dealer.setAttribute("id", "dealer");
-  dealer.setAttribute("class", "dealer");
-  dealer.innerHTML = d2.name;
+  bj1.d2.pElement = document.createElement("div");
+  bj1.d2.pElement.setAttribute("id", "dealer");
+  bj1.d2.pElement.setAttribute("class", "dealer");
+  bj1.d2.pElement.innerHTML = bj1.d2.name;
 
-  document.body.appendChild(dealer);
+  document.body.appendChild(bj1.d2.pElement);
 
-  dName = document.createElement("p");
-  dName.innerHTML = "YYYYYY";
-  dealer.appendChild(dName);
+  bj1.d2.pName = document.createElement("p");
+  bj1.d2.pName.innerHTML = "YYYYYY";
+  bj1.d2.pElement.appendChild(bj1.d2.pName);
 
   // Dealer area contains the table Position for the cards in the dealer's hand.
-  dealerPosition = document.createElement("div");
-  dealerPosition.setAttribute("id", "ppos1");
-  dealerPosition.setAttribute("class", "position");
+  bj1.d2.pPosition = document.createElement("div");
+  bj1.d2.pPosition.setAttribute("id", "ppos1");
+  bj1.d2.pPosition.setAttribute("class", "position");
 
-  dealer.appendChild(dealerPosition);
+  bj1.d2.pElement.appendChild(bj1.d2.pPosition);
 
   let dpTitle = document.createElement("p");
   dpTitle.innerHTML = "DEALER POSITION";
-  dealerPosition.appendChild(dpTitle);
+  bj1.d2.pPosition.appendChild(dpTitle);
 
-  p2 = new Player2("player", 0);
+let dHand: PlayerHand = new PlayerHand();
+    dHand.addDisplayPosition(bj1.d2.pPosition);
+    bj1.d2.addHandToPlayer(dHand);
+
+  bj1.p2[0] = new Player2("player", 0);
 
   // Table also contains the player area.
-  player = document.createElement("div");
-  player.setAttribute("id", "player1");
-  player.setAttribute("class", "player");
-  player.innerHTML = p2.name;
+  bj1.p2[0].pElement = document.createElement("div");
+  bj1.p2[0].pElement.setAttribute("id", "player1");
+  bj1.p2[0].pElement.setAttribute("class", "player");
+  bj1.p2[0].pElement.innerHTML = bj1.p2[0].name;
 
-  document.body.appendChild(player);
+  document.body.appendChild(bj1.p2[0].pElement);
 
-  pName = document.createElement("p");
-  pName.innerHTML = "XXXXXX";
-  player.appendChild(pName);
+  bj1.p2[0].pName = document.createElement("p");
+  bj1.p2[0].pName.innerHTML = "XXXXXX";
+  bj1.p2[0].pElement.appendChild(bj1.p2[0].pName);
 
   // Player area contains the table Position for the cards in the player's hand.
-  playerPosition = document.createElement("div");
-  playerPosition.setAttribute("id", "ppos1");
-  playerPosition.setAttribute("class", "position");
+  bj1.p2[0].pPosition = document.createElement("div");
+  bj1.p2[0].pPosition.setAttribute("id", "ppos1");
+  bj1.p2[0].pPosition.setAttribute("class", "position");
 
-  player.appendChild(playerPosition);
+  bj1.p2[0].pElement.appendChild(bj1.p2[0].pPosition);
 
   let ppTitle = document.createElement("p");
   ppTitle.innerHTML = "PLAYER1 POSITION";
-  playerPosition.appendChild(ppTitle);
+  bj1.p2[0].pPosition.appendChild(ppTitle);
 
-  // Player area also contains a set of buttons with the player's options.
-  hitButton = document.createElement("input");
-  hitButton.setAttribute("type","button");
-  hitButton.setAttribute("id","hb1");
-  hitButton.setAttribute("class", "button")
-//  hitButton.setAttribute("onclick","console.log('Hit Button'); hitBlackJack();");
-  hitButton.setAttribute("onclick","console.log('Hit Button'); executeHand(PlayerAction.Hit);");
-  hitButton.setAttribute("value","HIT BUTTON!");
+let pHand: PlayerHand = new PlayerHand();
+    pHand.addDisplayPosition(bj1.p2[0].pPosition);
+    bj1.p2[0].addHandToPlayer(pHand);
 
-  player.appendChild(hitButton);
+  bj1.createHitButton();
+  bj1.p2[0].pElement.appendChild(bj1.hitButton);
 
-  // Player area also contains a set of buttons with the player's options.
-  stayButton = document.createElement("input");
-  stayButton.setAttribute("type","button");
-  stayButton.setAttribute("id","hb1");
-  stayButton.setAttribute("class", "button")
-  stayButton.setAttribute("onclick","console.log('Stay Button'); executeHand(PlayerAction.Stay);");
-  stayButton.setAttribute("value","Stay BUTTON!");
-
-  player.appendChild(stayButton);
+  bj1.createStayButton();
+  bj1.p2[0].pElement.appendChild(bj1.stayButton);
 }
 
 function startBlackJack()
@@ -187,51 +243,33 @@ function startBlackJack()
 	console.log("Start BlackJack!");
 
 // Deal first card.
-	let myCard: Card2 = myDeck.pop();
-	p2.addCardToHand(myCard);
-	playerPosition.appendChild(p2.hand[0].el);
+    bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
 
-//	playerPosition.appendChild(myCard.el);
-   
-    myCard = myDeck.pop();
-    d2.addCardToHand(myCard);
-d2.hand[0].el.textContent = "CARD BACK";
-    dealerPosition.appendChild(d2.hand[0].el);
+    bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Down);
 
-    myCard = myDeck.pop();
-	p2.addCardToHand(myCard);
-	playerPosition.appendChild(p2.hand[1].el);
-	
-    pName.textContent = p2.name + ": " + p2.handTotal;
-	
-	myCard = myDeck.pop();
-    d2.addCardToHand(myCard);
-    dealerPosition.appendChild(d2.hand[1].el);
+    bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);	
+    bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
 
-    dName.textContent = d2.name + ": " + d2.handTotal;
+    bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
+    bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
 
-    hState = HandState.PostDeal;
+    bj1.hState = HandState.PostDeal;
     // Do Post Deal Activities;
 
-    hState = HandState.PlayerActive;
+    bj1.hState = HandState.PlayerActive;
 }
-
-let firstHand: boolean = true;
 
 function executeHand(action: PlayerAction)
 {
 	console.log("execute Hand");
 	
-	switch(hState)
+	switch(bj1.hState)
 	{
 		case HandState.NotStarted:
 		   initializeCardData();
-//           createBlackJackGame();
-//           testDeck.createDeck();
-//           testDeck.shuffleDeck();
-           hState = HandState.PreDeal;
+           bj1.hState = HandState.PreDeal;
 
-const hbTemp = hitButton as HTMLInputElement;
+const hbTemp = bj1.hitButton as HTMLInputElement;
 hbTemp.disabled = true;
            // Enable Deal Button
 		  break;
@@ -239,31 +277,31 @@ hbTemp.disabled = true;
         case HandState.PreDeal:
           if(action == PlayerAction.Deal)
           {
-	if(firstHand)
+	if(bj1.firstHand)
 	{
-		firstHand = false;
+		bj1.firstHand = false;
 	}
 	else
 	{
-			dealer.remove();
-		    player.remove();
+			bj1.d2.pElement.remove();
+		    bj1.p2[0].pElement.remove();
     }
 
 	           createBlackJackGame();
-               testDeck.createDeck();
-               testDeck.shuffleDeck();
+               bj1.testDeck.createDeck();
+               bj1.testDeck.shuffleDeck();
 
 	        startBlackJack();
             // update hState;
             // Enable proper buttons
-            if(d2.handTotal == 21 || p2.handTotal == 21)  // Dealer Black Jack or Player Black Jack (No double/no Insurance)
+            if(bj1.d2.hands[0].handTotal == 21 || bj1.p2[0].hands[0].handTotal == 21)  // Dealer Black Jack or Player Black Jack (No double/no Insurance)
             {
-	           hState = HandState.Complete;
+	           bj1.hState = HandState.Complete;
             }
             else
             {
-              hState = HandState.PlayerActive;
-              const hbTemp = hitButton as HTMLInputElement;
+              bj1.hState = HandState.PlayerActive;
+              const hbTemp = bj1.hitButton as HTMLInputElement;
               hbTemp.disabled = false;
             }
           }
@@ -274,48 +312,51 @@ hbTemp.disabled = true;
           {
 	         case PlayerAction.Hit:
                 executePlayerAction(action);
-                if(p2.handTotal > 21)
+                if(bj1.p2[0].hands[0].handTotal > 21)
                 {
-	               hState = HandState.Complete;
+	               bj1.hState = HandState.Complete;
                 }
              break;
  
              case PlayerAction.Stay:
                executePlayerAction(action)
                
-               hState = HandState.DealerActive; 
+               bj1.hState = HandState.DealerActive; 
                break;
           }
           break;
 		
 	}
 	
-	while(hState == HandState.DealerActive)
+	while(bj1.hState == HandState.DealerActive)
 	{
       // Dealer Active
-d2.hand[0].el.innerHTML = d2.hand[0].value.name + "<br />" + d2.hand[0].suit;
-//el.innerHTML = cardValues[j].name + "<br />" + suits[i];
-      if(d2.handTotal >= 17)
+bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<br />" + bj1.d2.hands[0].cards[0].suit;
+      if(bj1.d2.hands[0].handTotal >= 17)
       {            
-        hState = HandState.Complete;
+        bj1.hState = HandState.Complete;
       }
       else
       {
+	
+/*
 	     let myCard: Card2 = myDeck.pop();
-         d2.addCardToHand(myCard);
-         dealerPosition.appendChild(myCard.el);
+bj1.d2.hands[0].addCardToHand(myCard);
+*/
+         bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
 
-         dName.textContent = d2.name + ": " + d2.handTotal;
+
+         bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
       }
 
 	}
 	
 	evaluateHand();
 	
-	if(hState == HandState.Complete)
+	if(bj1.hState == HandState.Complete)
 	{
-		d2.hand[0].el.innerHTML = d2.hand[0].value.name + "<br />" + d2.hand[0].suit;
-		hState = HandState.PreDeal;
+bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<br />" + bj1.d2.hands[0].cards[0].suit;
+		bj1.hState = HandState.PreDeal;
 
 	}
 
@@ -325,51 +366,43 @@ d2.hand[0].el.innerHTML = d2.hand[0].value.name + "<br />" + d2.hand[0].suit;
 function evaluateHand()
 {
 	// Black Jack will come out as tie vs. a 3+ Card 21.
-	if(d2.handTotal > 21)
+	if(bj1.d2.hands[0].handTotal > 21)
 	{
-	  pName.textContent = p2.name + ": " + p2.handTotal + " PLAYER WON!";
-      hState = HandState.Complete;
+	  bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
+      bj1.hState = HandState.Complete;
     }
-    else if(p2.handTotal > 21)
+    else if(bj1.p2[0].hands[0].handTotal > 21)
     {
-	   pName.textContent = p2.name + ": " + p2.handTotal + " PLAYER BUSTED!";
-       hState = HandState.Complete;
+	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER BUSTED!";
+       bj1.hState = HandState.Complete;
     }
-    else if((p2.handTotal > d2.handTotal) && hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal > bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
-	   pName.textContent = p2.name + ": " + p2.handTotal + " PLAYER WON!";
+	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
     }
-    else if((p2.handTotal == d2.handTotal) && hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal == bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
-	   pName.textContent = p2.name + ": " + p2.handTotal + " PLAYER TIED!";
+	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER TIED!";
     }
-    else if((p2.handTotal < d2.handTotal) && hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal < bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
-	   pName.textContent = p2.name + ": " + p2.handTotal + " PLAYER LOST!";
+	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER LOST!";
     }
-    else if(hState == HandState.Complete)
+    else if(bj1.hState == HandState.Complete)
     {
-       pName.textContent = p2.name + ": " + p2.handTotal + " HOW DID WE GET HERE!";	   
+       bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " HOW DID WE GET HERE!";	   
     }
 }
 
 function hitBlackJack()
 {
 	console.log("Hit BlackJack!");
-	let pTotal: number = 0;
 
-	let myCard: Card2 = myDeck.pop();
-	p2.addCardToHand(myCard);
-	// p2.hand.push(myCard);
-	playerPosition.appendChild(myCard.el);
+	bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
 	
-	for(let i = 0; i < p2.hand.length; i++)
-	{
-		pTotal = pTotal + p2.hand[i].value.numValue;
-	}
-	
-	pName.textContent = p2.name + ": " + p2.handTotal;
-	console.log("Player total after hit = " + p2.handTotal);
+	bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
+	console.log("Player total after hit = " + bj1.p2[0].hands[0].handTotal);
+
 }
 
 
@@ -400,57 +433,4 @@ function executePlayerAction(action: PlayerAction)
 	// Initially, only Hit, Stay.  No Insurance(Even Money), No Split, No Double, No Surrender.  Does Dealer Hit Soft 17?
 	// Does Dealer Check for Black Jack if it has an Ace?
 }
-
-// Creates a new div element
-function createNewElement()
-{
-var el = document.createElement("div");
-el.setAttribute("id", "c1");
-el.innerHTML = "NEW ELEMENT";
-document.body.appendChild(el);
-}
-
-/*
-initializeCardData();
-createDeck();
-showDeck();
-console.log(typeof showDeck);
-*/
-
-/*
-function dealAllCards()
-{
-for(i = 0; i < myDeck.length; i++)
-{
-	createNewElement();
-}
-}
-*/
-
-/*
-// Just some tests
-let myCardValue = new CardValue(10, "Ten");
-let myCardValue2 = new CardValue(11, "Jack");
-let myCard3 = new Card2("xxxx", myCardValue);
-
-
-console.log(myCardValue2.name);
-
-console.log(myCard3.value); // console.log doesn't walk the tree of objects within the object passed into the function.
-*/
-
-/*
-module.exports = {
-  foo: function () {
-    // whatever
-  },
-  bar: function () {
-    // whatever
-  }
-};
-*/
-
-
-
-
 

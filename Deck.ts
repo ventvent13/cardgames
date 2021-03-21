@@ -11,6 +11,7 @@
 // Single deck of cards
 class Deck {
 	greeting: string;
+	myDeck = [];
 	constructor(greeting: string) {this.greeting = greeting;}
 
 
@@ -28,7 +29,7 @@ class Deck {
         el.innerHTML = cardValues[j].name + "<br />" + suits[i];
 		let localCard = new Card2(suits[i], cardValues[j], el);
 		console.log(localCard.value, localCard.suit);
-		myDeck.push(localCard);
+		this.myDeck.push(localCard);
 	  }
     }
   }
@@ -36,11 +37,11 @@ class Deck {
   // Show all cards in deck
   showDeck(dispElement: HTMLElement)
   {
-    for(let i = 0; i < myDeck.length; i++)
+    for(let i = 0; i < this.myDeck.length; i++)
     {
-	  console.log("Deck[" + i + "]:", myDeck[i].value, myDeck[i].suit);
+	  console.log("Deck[" + i + "]:", this.myDeck[i].value, this.myDeck[i].suit);
 //	  document.body.appendChild(myDeck[i].el);
-	  dispElement.appendChild(myDeck[i].el);
+	  dispElement.appendChild(this.myDeck[i].el);
     }
   }
 
@@ -48,11 +49,11 @@ class Deck {
   shuffleDeck()
   {
 	// shuffle the cards
-    for (let i = myDeck.length - 1; i > 0; i--) {
+    for (let i = this.myDeck.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * i);
-    let temp = myDeck[i];
-    myDeck[i] = myDeck[j];
-    myDeck[j] = temp;
+    let temp = this.myDeck[i];
+    this.myDeck[i] = this.myDeck[j];
+    this.myDeck[j] = temp;
     }
   }
 
