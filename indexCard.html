@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JavaScript Hello World Example</title>
+
+
+<script type="module">
+import {executeHand} from "./Cards.js"
+    window.play2 = function (type) {
+    	
+    	executeHand(type);
+    }
+
+
+/*
+initializeCardData();
+
+createBlackJackGame();
+
+testDeck.createDeck();
+*/
+
+/*
+showDeck();
+*/
+
+</script>
+
+        <script type = "module" src="./Card2.js"></script>
+        <script type = "module" src="./Deck.js"></script>
+        <script type = "module" src="./Cards.js"></script>
+<!--  
+        <script src="./Card2.js"></script>
+        <script src="./Deck.js"></script>
+        <script src="./Cards.js"></script>
+-->
+        <link rel="stylesheet" href="./Cards.css">
+ 
+<!--
+<style>
+div {
+  background-color: lightgrey;
+  width: 20px;
+  border: 10px solid green;
+  padding: 30px;
+  margin: 20px;
+  float: left;
+}
+</style>
+
+-->
+
+</head>
+<body>
+<script>
+    console.log("AWESOME");
+</script>
+
+
+<p>
+<button type="button"
+ onclick="console.log('clicked');testDeck.showDeck(document.body)">
+Show Cards!</button>
+
+<!-- 
+<button type="button"
+ onclick="console.log('Start Black Jack');executeHand(PlayerAction.Deal);">
+Start Black Jack!</button>
+</p>
+ -->
+
+<button type="button" value="anything"
+ onclick="console.log('Start Black Jack');window.play2(1);">
+Start Black Jack!</button>
+</p>
+
+
+
+
+<script type="module">
+// import {executeHand} from "./Cards.js"
+
+
+// executeHand(0);
+window.play2(0);
+var CardTest = ["Two", "Three", "Four", "Five"];
+console.log(CardTest[1] +'\u2660'); //u2660 is the spade symbol
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
+/*
 /// <reference path="./Card2.ts" />
+*/
+import {Card2, numSuits, numValues, cardValues, suits} from "./Card2.js"
 
-// import * as card from "./Cards.css"
 
 
 
@@ -9,7 +11,7 @@
 
 
 // Single deck of cards
-class Deck {
+export class Deck {
 	greeting: string;
 	myDeck = [];
 	constructor(greeting: string) {this.greeting = greeting;}

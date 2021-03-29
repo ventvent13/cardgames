@@ -1,16 +1,16 @@
 
 // Suits
-var suits = ["hearts", "diamonds", "spades", "clubs"];
-var numSuits = suits.length;
+export var suits = ["hearts", "diamonds", "spades", "clubs"];
+export var numSuits = suits.length;
 
 // Name and Value of card
-var numValues = 13;
+export var numValues = 13;
 var cardNames = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 let cardNumValues : number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11];
-var cardValues = [];
+export var cardValues = [];
 
 /* Defintion of the Value of a card */
-class CardValue {
+export class CardValue {
 	numValue: number;
 	name: string;
 	constructor(numValue: number, name: string) {
@@ -20,7 +20,7 @@ class CardValue {
 }
 
 /* Definition of a card */
-class Card2 {
+export class Card2 {
 	suit: string;
 	value: CardValue;
 	el;
@@ -32,7 +32,7 @@ class Card2 {
 }
 
 // Creates the set of CardValue (numeric value, name value) objects
-function initializeCardData()
+export function initializeCardData()
 {
 for(let i =0; i <  numValues; i++)
 {

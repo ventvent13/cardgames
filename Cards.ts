@@ -1,7 +1,9 @@
+/*
 /// <reference path="./Card2.ts" />
 /// <reference path="./Deck.ts" />
-
-// import * as card from "./Cards.css"
+*/
+import {Card2, numSuits, numValues, cardValues, suits, initializeCardData} from "./Card2.js"
+import {Deck} from "./Deck.js"
 
 // Test Comment
 
@@ -149,7 +151,8 @@ if(cFace == CardFaceDirection.Down)
   this.hitButton.setAttribute("type","button");
   this.hitButton.setAttribute("id","hb1");
   this.hitButton.setAttribute("class", "button")
-  this.hitButton.setAttribute("onclick","console.log('Hit Button'); executeHand(PlayerAction.Hit);");
+  this.hitButton.setAttribute("onclick","console.log('XXX Button'); window.play3(2);");
+//  this.hitButton.setAttribute("onclick","console.log('Hit Button'); executeHand(PlayerAction.Hit);");
   this.hitButton.setAttribute("value","HIT BUTTON!");		
 	}
 	
@@ -160,7 +163,7 @@ if(cFace == CardFaceDirection.Down)
   this.stayButton.setAttribute("type","button");
   this.stayButton.setAttribute("id","hb1");
   this.stayButton.setAttribute("class", "button")
-  this.stayButton.setAttribute("onclick","console.log('Stay Button'); executeHand(PlayerAction.Stay);");
+  this.stayButton.setAttribute("onclick","console.log('Stay Button'); window.play3(3);");
   this.stayButton.setAttribute("value","Stay BUTTON!");
 	}
 }
@@ -259,7 +262,7 @@ function startBlackJack()
     bj1.hState = HandState.PlayerActive;
 }
 
-function executeHand(action: PlayerAction)
+export function executeHand (action: PlayerAction)
 {
 	console.log("execute Hand");
 	
@@ -269,8 +272,10 @@ function executeHand(action: PlayerAction)
 		   initializeCardData();
            bj1.hState = HandState.PreDeal;
 
+/*
 const hbTemp = bj1.hitButton as HTMLInputElement;
 hbTemp.disabled = true;
+*/
            // Enable Deal Button
 		  break;
         
@@ -362,6 +367,19 @@ bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<
 
 	
 }
+
+declare global {
+    interface Window {
+        play3:any;
+    }
+}
+
+    window.play3 = function (type) {
+    	
+    	executeHand(type);
+    }
+
+
 
 function evaluateHand()
 {
