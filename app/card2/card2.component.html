@@ -1,0 +1,38 @@
+
+<div class = "dealer">
+DEALER
+<div  class = "position">
+<div *ngIf="dealerHand">Score: {{dealerHand.handTotal}}</div>
+<!--  
+<div class = "card">{{testCard.value.name}} of {{testCard.suit}}</div>
+<div class = "card">{{deckCard.value.name}} of {{deckCard.suit}}</div>
+<div class = "card">{{handCard.value.name}} of {{handCard.suit}}</div>
+-->
+<ul class = "displayHand">
+<li *ngFor="let dispCard of handCards">
+<div *ngIf="dispCard.direction === 1; else cardDown" class = "card">{{dispCard.value.name}}<br>{{dispCard.suit}}</div>
+<ng-template #cardDown>
+   <div class = "card">CARD<br/>DOWN</div>
+</ng-template>
+</li>
+</ul>
+</div>
+</div>
+
+<div class = "player">
+PLAYER
+<div  class = "position">
+<div *ngIf="playerHand">Score: {{playerHand.handTotal}} Result: {{playerHand.handResult}}</div>
+
+<ul class = "displayHand">
+<li *ngFor="let dispPCard of playerCards">
+<div class = "card">{{dispPCard.value.name}}<br>{{dispPCard.suit}}</div>
+</li>
+</ul>
+ 
+</div>
+</div>
+
+<input type = "button" class = "button" value = "HIT ME!"(click)="playerHit()">
+<input type = "button" class = "button" value = "STAY"(click)="playerStay()">
+<input type = "button" class = "button" value = "DEAL"(click)="deal()">
