@@ -9,6 +9,12 @@ var cardNames = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A
 let cardNumValues : number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11];
 export var cardValues = [];
 
+export enum CardFaceDirection
+{
+	Down,
+	Up
+}
+
 /* Defintion of the Value of a card */
 export class CardValue {
 	numValue: number;
@@ -24,10 +30,12 @@ export class Card2 {
 	suit: string;
 	value: CardValue;
 	el;
+	direction: CardFaceDirection;
 	constructor(suit, value, el) {
 	this.suit = suit;
 	this.value = value;
 	this.el = el;
+	this.direction = CardFaceDirection.Up;
 	}
 }
 

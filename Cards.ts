@@ -2,12 +2,12 @@
 /// <reference path="./Card2.ts" />
 /// <reference path="./Deck.ts" />
 */
-import {Card2, numSuits, numValues, cardValues, suits, initializeCardData} from "./Card2.js"
+import {Card2, numSuits, numValues, cardValues, suits, initializeCardData, CardFaceDirection} from "./Card2.js"
 import {Deck} from "./Deck.js"
 
 // Test Comment
 
-enum PlayerAction
+export enum PlayerAction
 {
 	NoAction,
 	Deal,
@@ -25,12 +25,15 @@ enum HandState
 	Complete
 }
 
-class PlayerHand
+export let jsImpl: boolean = true;
+
+export class PlayerHand
 {
 	cards = [];
 
 	handTotal: number = 0;
 	handHasAce: boolean = false;
+	handResult: string = "NoResult";
 	
 	displayParent: HTMLElement;
 	
@@ -82,7 +85,7 @@ class PlayerHand
 }
 
 
-class Player2 
+export class Player2 
 {
 
 	hands = [];
@@ -110,13 +113,8 @@ class Player2
 
 }
 
-enum CardFaceDirection
-{
-	Down,
-	Up
-}
 
-class BlackJackGame
+export class BlackJackGame
 {
 	d2: Player2;   // Dealer
 	p2 = [];       // Array of Players
@@ -139,6 +137,7 @@ class BlackJackGame
 if(cFace == CardFaceDirection.Down)
 {
    myCard.el.textContent = "CARD BACK";
+   myCard.direction = CardFaceDirection.Down;
 }
 	    pHand.addCardToHand(myCard);
 		
@@ -168,7 +167,7 @@ if(cFace == CardFaceDirection.Down)
 	}
 }
 
-let bj1 = new BlackJackGame();
+export let bj1: BlackJackGame;
 
 // Create a game with one dealer and one player and the screen representation of the table
 function createBlackJackGame()
@@ -184,7 +183,10 @@ function createBlackJackGame()
   bj1.d2.pElement.setAttribute("class", "dealer");
   bj1.d2.pElement.innerHTML = bj1.d2.name;
 
+if(jsImpl)
+{
   document.body.appendChild(bj1.d2.pElement);
+}
 
   bj1.d2.pName = document.createElement("p");
   bj1.d2.pName.innerHTML = "YYYYYY";
@@ -213,7 +215,10 @@ let dHand: PlayerHand = new PlayerHand();
   bj1.p2[0].pElement.setAttribute("class", "player");
   bj1.p2[0].pElement.innerHTML = bj1.p2[0].name;
 
+if(jsImpl)
+{
   document.body.appendChild(bj1.p2[0].pElement);
+}
 
   bj1.p2[0].pName = document.createElement("p");
   bj1.p2[0].pName.innerHTML = "XXXXXX";
@@ -262,9 +267,17 @@ function startBlackJack()
     bj1.hState = HandState.PlayerActive;
 }
 
-export function executeHand (action: PlayerAction)
+let startOfGame: boolean = true;
+
+export function executeHand(action: PlayerAction)
 {
 	console.log("execute Hand");
+	
+    if(startOfGame)
+    {
+       bj1 = new BlackJackGame();
+       startOfGame = false;
+    }
 	
 	switch(bj1.hState)
 	{
@@ -274,7 +287,7 @@ export function executeHand (action: PlayerAction)
 
 /*
 const hbTemp = bj1.hitButton as HTMLInputElement;
-hbTemp.disabled = true;
+// hbTemp.disabled = true;
 */
            // Enable Deal Button
 		  break;
@@ -356,11 +369,19 @@ bj1.d2.hands[0].addCardToHand(myCard);
 
 	}
 	
-	evaluateHand();
+	switch(bj1.hState)
+	{
+		case HandState.PostDeal:
+		case HandState.PlayerActive:
+		case HandState.Complete:
+		   evaluateHand();
+           break;
+	}
 	
 	if(bj1.hState == HandState.Complete)
 	{
 bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<br />" + bj1.d2.hands[0].cards[0].suit;
+bj1.d2.hands[0].cards[0].direction = CardFaceDirection.Up;
 		bj1.hState = HandState.PreDeal;
 
 	}
@@ -386,28 +407,34 @@ function evaluateHand()
 	// Black Jack will come out as tie vs. a 3+ Card 21.
 	if(bj1.d2.hands[0].handTotal > 21)
 	{
+	  bj1.p2[0].hands[0].handResult = "PLAYER WON!";
 	  bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
       bj1.hState = HandState.Complete;
     }
     else if(bj1.p2[0].hands[0].handTotal > 21)
     {
+	   bj1.p2[0].hands[0].handResult = "PLAYER BUSTED!";
 	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER BUSTED!";
        bj1.hState = HandState.Complete;
     }
     else if((bj1.p2[0].hands[0].handTotal > bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
+	   bj1.p2[0].hands[0].handResult = "PLAYER WON!";
 	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
     }
     else if((bj1.p2[0].hands[0].handTotal == bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
+	   bj1.p2[0].hands[0].handResult = "PLAYER TIED!";
 	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER TIED!";
     }
     else if((bj1.p2[0].hands[0].handTotal < bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
     {
+	   bj1.p2[0].hands[0].handResult = "PLAYER LOST!";
 	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER LOST!";
     }
     else if(bj1.hState == HandState.Complete)
     {
+	   bj1.p2[0].hands[0].handResult = "SHOULD NOT BE HERE!";
        bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " HOW DID WE GET HERE!";	   
     }
 }
@@ -424,7 +451,7 @@ function hitBlackJack()
 }
 
 
-function executePlayerAction(action: PlayerAction)
+export function executePlayerAction(action: PlayerAction)
 {
 	switch (action)
 	{
