@@ -2,7 +2,8 @@
 /// <reference path="./Card2.ts" />
 /// <reference path="./Deck.ts" />
 */
-import {Card2, numSuits, numValues, cardValues, suits, initializeCardData, CardFaceDirection} from "./Card2.js"
+/* Remove '.js' for React */
+import {Card2, numSuits, numValues, cardValues, suits, initializeCardData, CardFaceDirection,CardValue} from "./Card2.js"
 import {Deck} from "./Deck.js"
 
 // Test Comment
@@ -12,7 +13,8 @@ export enum PlayerAction
 	NoAction,
 	Deal,
 	Hit,
-	Stay
+	Stay,
+	DoubleDown
 }
 
 enum HandState
@@ -25,17 +27,35 @@ enum HandState
 	Complete
 }
 
-export let jsImpl: boolean = true;
+enum HandOutcome
+{
+	NoResult = "NO RESULT",
+	PlayerWon = "PLAYER WON",
+	PlayerTied = "PLAYER TIED",
+	PlayerLost = "PLAYER LOST"
+}
+
+// jsImpl determines whether the app is a native Javascript app which needs to update the DOM itsel
+// Callers, like Angular, can call setJsImpl to take ownership of the display/DOM
+let jsImpl: boolean = true;
+
+export function setJsImpl(newValue: boolean)
+{
+	jsImpl = newValue;
+}
 
 export class PlayerHand
 {
-	cards = [];
+	cards: Card2[] = [];
 
 	handTotal: number = 0;
 	handHasAce: boolean = false;
 	handResult: string = "NoResult";
+	hResult: HandOutcome = HandOutcome.NoResult;
+	handBet: number = 0;
+	handWin: number = 0;
 	
-	displayParent: HTMLElement;
+	displayParent: HTMLElement = document.createElement("p");
 	
 	constructor()
 	{
@@ -45,6 +65,15 @@ export class PlayerHand
     addDisplayPosition(dParent: HTMLElement)
     {
 	   this.displayParent = dParent;
+    }
+
+    removeCardFromHand()
+    {
+	   let newCard = this.cards.pop();
+       if(newCard !== undefined)
+       {
+          this.displayParent.removeChild(newCard.el);
+       }
     }
 
 	// Calculation is a mess right now.
@@ -58,14 +87,14 @@ export class PlayerHand
 		this.handTotal = 0
 		for(let i: number = 0; i < this.cards.length; i++)
 		{
-			if(this.handHasAce == false && this.cards[i].value.numValue == 11)
+			if(this.handHasAce === false && this.cards[i].value.numValue === 11)
 			{
 				this.handTotal = this.handTotal + 11;
 				this.handHasAce = true;
 			}
 			else
 			{
-				if(this.cards[i].value.numValue == 11)
+				if(this.cards[i].value.numValue === 11)
 				{
 					this.handTotal = this.handTotal + 1;
 				}
@@ -75,7 +104,7 @@ export class PlayerHand
 	            }
 			}
 		}
-		if(this.handHasAce == true && this.handTotal > 21)
+		if(this.handHasAce === true && this.handTotal > 21)
 		{
 			this.handTotal = this.handTotal - 10;
 		}
@@ -88,26 +117,38 @@ export class PlayerHand
 export class Player2 
 {
 
-	hands = [];
+	hands: PlayerHand[] = [];
 
 	handHasAce: boolean = false;
 	name: string;
 	role: number = 0;
 	pElement: HTMLDivElement;
-	pPosition: HTMLDivElement;
-	pName: HTMLDivElement;
+	pPosition!: HTMLDivElement;
+	pName!: HTMLDivElement;
+	bankRoll: number = 100;
+	playerBet: number = 5;
 	constructor(playerName: string, playerRole: number)
 	{
 		console.log("Built Player");
 
 		this.name = playerName;
 		this.role = playerRole;
+		this.pElement = document.createElement("div");
 //		this.hands[0] = pHand;
 	}
 	
 	addHandToPlayer(pHand: PlayerHand)
 	{
 		this.hands.push(pHand);
+	}
+	
+	removeHandFromPlayer()
+	{
+		while(this.hands[0].cards.length > 0)
+		{
+			this.hands[0].removeCardFromHand();
+		}
+		this.hands.pop();
 	}
 
 
@@ -117,28 +158,38 @@ export class Player2
 export class BlackJackGame
 {
 	d2: Player2;   // Dealer
-	p2 = [];       // Array of Players
+	p2: Player2[] = [];       // Array of Players
 	firstHand: boolean;
 	hState: HandState;
-	hitButton: HTMLDivElement;
-    stayButton: HTMLDivElement;
-    testDeck: Deck;
+	hitButton!: HTMLDivElement;
+    stayButton!: HTMLDivElement;
+    dealButton!: HTMLDivElement;
+    ddButton!: HTMLDivElement;
+    testDeck!: Deck;
 	
 	constructor ()
 	{
 		this.firstHand = true;
 		this.hState = HandState.NotStarted;
+		this.testDeck = new Deck("BJ1 Deck");
+		this.d2 = new Player2("dealer", 1);
 	}
 	
 	dealCard(pHand: PlayerHand, cFace: CardFaceDirection)
 	{
 
-	    let myCard: Card2 = this.testDeck.myDeck.pop();
-if(cFace == CardFaceDirection.Down)
-{
-   myCard.el.textContent = "CARD BACK";
-   myCard.direction = CardFaceDirection.Down;
-}
+	    let myCard: Card2 = this.testDeck.myDeck.pop()!;
+
+        if(cFace === CardFaceDirection.Down)
+        {
+           //   myCard.el.textContent = "CARD BACK";
+
+           // \u{1f0a0} is unicode for the card back - probably should make it a constant in Card2.ts and export it.
+
+           // JAVASCRIPT_DISPLAY
+           myCard.el.innerHTML = '\u{1f0a0}';
+           myCard.direction = CardFaceDirection.Down;
+        }
 	    pHand.addCardToHand(myCard);
 		
 	}
@@ -160,11 +211,75 @@ if(cFace == CardFaceDirection.Down)
 		  // Player area also contains a set of buttons with the player's options.
   this.stayButton = document.createElement("input");
   this.stayButton.setAttribute("type","button");
-  this.stayButton.setAttribute("id","hb1");
+  this.stayButton.setAttribute("id","sb1");
   this.stayButton.setAttribute("class", "button")
   this.stayButton.setAttribute("onclick","console.log('Stay Button'); window.play3(3);");
   this.stayButton.setAttribute("value","Stay BUTTON!");
 	}
+	
+    createDDButton()
+	{
+		  // Player area also contains a set of buttons with the player's options.
+  this.ddButton = document.createElement("input");
+  this.ddButton.setAttribute("type","button");
+  this.ddButton.setAttribute("id","ddb1");
+  this.ddButton.setAttribute("class", "button")
+  this.ddButton.setAttribute("onclick","console.log('Double Down Button'); window.play3(4);");
+  this.ddButton.setAttribute("value","DOUBLE DOWN!");
+	}
+	
+	createDealButton()
+	{
+		  // Player area also contains a set of buttons with the player's options.
+  this.dealButton = document.createElement("input");
+  this.dealButton.setAttribute("type","button");
+  this.dealButton.setAttribute("id","db1");
+  this.dealButton.setAttribute("class", "button")
+  this.dealButton.setAttribute("onclick","console.log('Deal Button'); window.play3(1);");
+  this.dealButton.setAttribute("value","Deal BUTTON!");
+	}
+
+    // DISPLAY:  Need to rationalize this logic with the Angular logic - Probably should get the button by id instead of
+    // attribute which we only have populated for the JAVASCRIPT_DISPLAY	
+	disableHitButton()
+	{
+		const dbTemp = bj1.hitButton as HTMLInputElement;
+        dbTemp.disabled = true;
+	}
+
+	enableHitButton()
+	{
+		const dbTemp = bj1.hitButton as HTMLInputElement;
+        dbTemp.disabled = false;
+	}
+	
+	disableStayButton()
+	{
+		const dbTemp = bj1.stayButton as HTMLInputElement;
+        dbTemp.disabled = true;
+	}
+
+	enableStayButton()
+	{
+		const dbTemp = bj1.stayButton as HTMLInputElement;
+        dbTemp.disabled = false;
+	}
+	
+	disableDDButton()
+	{
+		const dbTemp = bj1.ddButton as HTMLInputElement;
+		const gTemp = document.getElementById("ddb1") as HTMLInputElement;
+		gTemp.disabled = true;
+        dbTemp.disabled = true;
+	}
+
+	enableDDButton()
+	{
+		const dbTemp = bj1.ddButton as HTMLInputElement;
+		const gTemp = document.getElementById("ddb1") as HTMLInputElement;
+		gTemp.disabled = false;
+        dbTemp.disabled = false;
+	}	
 }
 
 export let bj1: BlackJackGame;
@@ -173,15 +288,23 @@ export let bj1: BlackJackGame;
 function createBlackJackGame()
 {
 
-  bj1.testDeck = new Deck("BJ1 Deck");
+//  bj1.testDeck = new Deck("BJ1 Deck");
 
+/* Moved to constructor
   bj1.d2 = new Player2("dealer", 1);
+*/
 
+  // Begin JAVASCRIPT_DISPLAY
   // Table contains a dealer area.
+// Create player position element for Dealer
+{
+/* Moved to Player constructor
   bj1.d2.pElement = document.createElement("div");
+*/
   bj1.d2.pElement.setAttribute("id", "dealer");
   bj1.d2.pElement.setAttribute("class", "dealer");
-  bj1.d2.pElement.innerHTML = bj1.d2.name;
+//  bj1.d2.pElement.innerHTML = bj1.d2.name;
+}
 
 if(jsImpl)
 {
@@ -201,7 +324,8 @@ if(jsImpl)
 
   let dpTitle = document.createElement("p");
   dpTitle.innerHTML = "DEALER POSITION";
-  bj1.d2.pPosition.appendChild(dpTitle);
+//  bj1.d2.pPosition.appendChild(dpTitle);
+  // End JAVASCRIPT_DISPLAY
 
 let dHand: PlayerHand = new PlayerHand();
     dHand.addDisplayPosition(bj1.d2.pPosition);
@@ -209,11 +333,17 @@ let dHand: PlayerHand = new PlayerHand();
 
   bj1.p2[0] = new Player2("player", 0);
 
+  // Begin JAVASCRIPT_DISPLAY
   // Table also contains the player area.
+// Create player position element for player - Should be fully moved to constructor
+{
+/* Moved to constructor
   bj1.p2[0].pElement = document.createElement("div");
+*/
   bj1.p2[0].pElement.setAttribute("id", "player1");
   bj1.p2[0].pElement.setAttribute("class", "player");
-  bj1.p2[0].pElement.innerHTML = bj1.p2[0].name;
+//  bj1.p2[0].pElement.innerHTML = bj1.p2[0].name;
+}
 
 if(jsImpl)
 {
@@ -224,6 +354,12 @@ if(jsImpl)
   bj1.p2[0].pName.innerHTML = "XXXXXX";
   bj1.p2[0].pElement.appendChild(bj1.p2[0].pName);
 
+  let bRollElement = document.createElement("p");
+  bRollElement.setAttribute("id", "p1br");
+  bRollElement.setAttribute("float", "left")
+  bRollElement.innerHTML = "BANKROLL: " + bj1.p2[0].bankRoll;
+  bj1.p2[0].pElement.appendChild(bRollElement);
+
   // Player area contains the table Position for the cards in the player's hand.
   bj1.p2[0].pPosition = document.createElement("div");
   bj1.p2[0].pPosition.setAttribute("id", "ppos1");
@@ -233,17 +369,39 @@ if(jsImpl)
 
   let ppTitle = document.createElement("p");
   ppTitle.innerHTML = "PLAYER1 POSITION";
-  bj1.p2[0].pPosition.appendChild(ppTitle);
+//  bj1.p2[0].pPosition.appendChild(ppTitle);
+
+  
+  let hBetElement = document.createElement("div");
+  hBetElement.setAttribute("id", "p1hb");
+  hBetElement.style.setProperty("float", "left");
+  hBetElement.innerHTML = " HAND BET: ";
+  bj1.p2[0].pPosition.appendChild(hBetElement);
+
+  let hWinElement = document.createElement("div");
+  hWinElement.setAttribute("id", "p1hw");
+//  hWinElement.style.setProperty("float", "left");
+  hWinElement.innerHTML = " HAND WIN: ";
+  bj1.p2[0].pPosition.appendChild(hWinElement);
+  // End JAVASCRIPT_DISPLAY
 
 let pHand: PlayerHand = new PlayerHand();
     pHand.addDisplayPosition(bj1.p2[0].pPosition);
     bj1.p2[0].addHandToPlayer(pHand);
 
+  // Begin JAVASCRIPT_DISPLAY
   bj1.createHitButton();
   bj1.p2[0].pElement.appendChild(bj1.hitButton);
 
   bj1.createStayButton();
   bj1.p2[0].pElement.appendChild(bj1.stayButton);
+
+  bj1.createDDButton();
+  bj1.p2[0].pElement.appendChild(bj1.ddButton);
+
+  bj1.createDealButton();
+  bj1.p2[0].pElement.appendChild(bj1.dealButton);
+  // End JAVASCRIPT_DISPLAY
 }
 
 function startBlackJack()
@@ -256,13 +414,23 @@ function startBlackJack()
     bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Down);
 
     bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);	
+
+    // JAVASCRIPT_DISPLAY - The handTotal display should be updated in the hand portion of the display, not the player portioin
+    // And the display update could be moved to the location in the hand where the total is calculated.
     bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
 
     bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
+
+    // JAVASCRIPT_DISPLAY - The handTotal display should be updated in the hand portion of the display, not the player portioin
+    // And the display update could be moved to the location in the hand where the total is calculated.
     bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
 
     bj1.hState = HandState.PostDeal;
     // Do Post Deal Activities;
+
+    const dbTemp = bj1.dealButton as HTMLInputElement;
+    dbTemp.disabled = true;
+
 
     bj1.hState = HandState.PlayerActive;
 }
@@ -285,42 +453,61 @@ export function executeHand(action: PlayerAction)
 		   initializeCardData();
            bj1.hState = HandState.PreDeal;
 
-/*
-const hbTemp = bj1.hitButton as HTMLInputElement;
-// hbTemp.disabled = true;
-*/
            // Enable Deal Button
 		  break;
         
         case HandState.PreDeal:
-          if(action == PlayerAction.Deal)
+          if(action === PlayerAction.Deal)
           {
 	if(bj1.firstHand)
 	{
 		bj1.firstHand = false;
+		createBlackJackGame();
 	}
 	else
 	{
-			bj1.d2.pElement.remove();
-		    bj1.p2[0].pElement.remove();
+//			bj1.d2.pElement.remove();
+//		    bj1.p2[0].pElement.remove();
+// Clear table by getting rid of old hands and creating new hands - but NOT PLAYERS!
+// If we remove the cards, should we delete the hands and create new ones.
+bj1.d2.removeHandFromPlayer();
+bj1.p2[0].removeHandFromPlayer();
+
+let dHand: PlayerHand = new PlayerHand();
+    dHand.handTotal = 0;
+    dHand.addDisplayPosition(bj1.d2.pPosition);
+    bj1.d2.addHandToPlayer(dHand);
+
+let pHand: PlayerHand = new PlayerHand();
+    pHand.handTotal = 0;
+    pHand.addDisplayPosition(bj1.p2[0].pPosition);
+    bj1.p2[0].addHandToPlayer(pHand);
+
     }
 
-	           createBlackJackGame();
+//	           createBlackJackGame();
                bj1.testDeck.createDeck();
                bj1.testDeck.shuffleDeck();
 
+			bj1.p2[0].hands[0].handBet = bj1.p2[0].playerBet;
+			bj1.p2[0].bankRoll = bj1.p2[0].bankRoll - bj1.p2[0].playerBet;
 	        startBlackJack();
+
             // update hState;
             // Enable proper buttons
-            if(bj1.d2.hands[0].handTotal == 21 || bj1.p2[0].hands[0].handTotal == 21)  // Dealer Black Jack or Player Black Jack (No double/no Insurance)
+            if(bj1.d2.hands[0].handTotal === 21 || bj1.p2[0].hands[0].handTotal === 21)  // Dealer Black Jack or Player Black Jack (No double/no Insurance)
             {
-	           bj1.hState = HandState.Complete;
+	          bj1.hState = HandState.Complete;
+              bj1.disableHitButton();
+              bj1.disableStayButton();
+              bj1.disableDDButton();
             }
             else
             {
               bj1.hState = HandState.PlayerActive;
-              const hbTemp = bj1.hitButton as HTMLInputElement;
-              hbTemp.disabled = false;
+              bj1.enableHitButton();
+              bj1.enableStayButton();
+              bj1.enableDDButton();
             }
           }
           break;
@@ -330,26 +517,52 @@ const hbTemp = bj1.hitButton as HTMLInputElement;
           {
 	         case PlayerAction.Hit:
                 executePlayerAction(action);
+                bj1.disableDDButton();
                 if(bj1.p2[0].hands[0].handTotal > 21)
                 {
 	               bj1.hState = HandState.Complete;
+              bj1.disableHitButton();
+              bj1.disableStayButton();
                 }
              break;
  
              case PlayerAction.Stay:
                executePlayerAction(action)
                
-               bj1.hState = HandState.DealerActive; 
+              bj1.hState = HandState.DealerActive; 
+              bj1.disableHitButton();
+              bj1.disableStayButton();
+              bj1.disableDDButton();
                break;
+
+            case PlayerAction.DoubleDown:
+                executePlayerAction(action);
+	               bj1.hState = HandState.Complete;
+                   bj1.disableHitButton();
+                   bj1.disableStayButton();
+                   bj1.disableDDButton();
+                if(bj1.p2[0].hands[0].handTotal > 21)
+                {
+	               bj1.hState = HandState.Complete;
+                }
+                else
+                {
+	               bj1.hState = HandState.DealerActive;
+                }
+             break;
           }
           break;
 		
 	}
 	
-	while(bj1.hState == HandState.DealerActive)
+	while(bj1.hState === HandState.DealerActive)
 	{
       // Dealer Active
+      // First, flip dealers hole card over
+
+// JAVASCRIPT_DISPLAY - Need to update this use the cardReference attribute
 bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<br />" + bj1.d2.hands[0].cards[0].suit;
+bj1.d2.hands[0].cards[0].direction = CardFaceDirection.Up;
       if(bj1.d2.hands[0].handTotal >= 17)
       {            
         bj1.hState = HandState.Complete;
@@ -357,13 +570,10 @@ bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<
       else
       {
 	
-/*
-	     let myCard: Card2 = myDeck.pop();
-bj1.d2.hands[0].addCardToHand(myCard);
-*/
+
          bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
 
-
+         // JAVASCRIPT DISPLAY
          bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
       }
 
@@ -378,11 +588,14 @@ bj1.d2.hands[0].addCardToHand(myCard);
            break;
 	}
 	
-	if(bj1.hState == HandState.Complete)
+	if(bj1.hState === HandState.Complete)
 	{
-bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].value.name + "<br />" + bj1.d2.hands[0].cards[0].suit;
+// JAVASCRIPT_DISPLAY
+bj1.d2.hands[0].cards[0].el.innerHTML = bj1.d2.hands[0].cards[0].cardRepString;
 bj1.d2.hands[0].cards[0].direction = CardFaceDirection.Up;
 		bj1.hState = HandState.PreDeal;
+		const dbTemp = bj1.dealButton as HTMLInputElement;
+        dbTemp.disabled = false;
 
 	}
 
@@ -395,7 +608,7 @@ declare global {
     }
 }
 
-    window.play3 = function (type) {
+    window.play3 = function (type: PlayerAction) {
     	
     	executeHand(type);
     }
@@ -407,36 +620,43 @@ function evaluateHand()
 	// Black Jack will come out as tie vs. a 3+ Card 21.
 	if(bj1.d2.hands[0].handTotal > 21)
 	{
-	  bj1.p2[0].hands[0].handResult = "PLAYER WON!";
-	  bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
-      bj1.hState = HandState.Complete;
+	   bj1.p2[0].hands[0].handResult = "PLAYER WON!";
+       bj1.p2[0].hands[0].handWin = bj1.p2[0].hands[0].handBet;
+       bj1.p2[0].bankRoll = bj1.p2[0].bankRoll + bj1.p2[0].hands[0].handBet + bj1.p2[0].hands[0].handWin;
+       bj1.hState = HandState.Complete;
     }
     else if(bj1.p2[0].hands[0].handTotal > 21)
     {
 	   bj1.p2[0].hands[0].handResult = "PLAYER BUSTED!";
-	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER BUSTED!";
        bj1.hState = HandState.Complete;
     }
-    else if((bj1.p2[0].hands[0].handTotal > bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal > bj1.d2.hands[0].handTotal) && bj1.hState === HandState.Complete)
     {
 	   bj1.p2[0].hands[0].handResult = "PLAYER WON!";
-	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER WON!";
+       bj1.p2[0].hands[0].handWin = bj1.p2[0].hands[0].handBet;
+       bj1.p2[0].bankRoll = bj1.p2[0].bankRoll + bj1.p2[0].hands[0].handBet + bj1.p2[0].hands[0].handWin;
     }
-    else if((bj1.p2[0].hands[0].handTotal == bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal === bj1.d2.hands[0].handTotal) && bj1.hState === HandState.Complete)
     {
+	   bj1.p2[0].hands[0].handWin = 0;
+       bj1.p2[0].bankRoll = bj1.p2[0].bankRoll + bj1.p2[0].hands[0].handBet + bj1.p2[0].hands[0].handWin;
 	   bj1.p2[0].hands[0].handResult = "PLAYER TIED!";
-	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER TIED!";
     }
-    else if((bj1.p2[0].hands[0].handTotal < bj1.d2.hands[0].handTotal) && bj1.hState == HandState.Complete)
+    else if((bj1.p2[0].hands[0].handTotal < bj1.d2.hands[0].handTotal) && bj1.hState === HandState.Complete)
     {
 	   bj1.p2[0].hands[0].handResult = "PLAYER LOST!";
-	   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " PLAYER LOST!";
     }
-    else if(bj1.hState == HandState.Complete)
+    else if(bj1.hState === HandState.Complete)
     {
 	   bj1.p2[0].hands[0].handResult = "SHOULD NOT BE HERE!";
-       bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + " HOW DID WE GET HERE!";	   
     }
+
+    // JAVASCRIPT_DISPLAY
+    bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
+/* Comment these three lines out for React...for now */
+    document.getElementById("p1br").innerHTML = " BANKROLL: " + bj1.p2[0].bankRoll;
+    document.getElementById("p1hb").innerHTML = " HAND BET: " + bj1.p2[0].hands[0].handBet;
+    document.getElementById("p1hw").innerHTML = " HAND WIN: " + bj1.p2[0].hands[0].handWin;
 }
 
 function hitBlackJack()
@@ -444,9 +664,22 @@ function hitBlackJack()
 	console.log("Hit BlackJack!");
 
 	bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
-	
+
+    // JAVASCRIPT_DISPLAY	
 	bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
 	console.log("Player total after hit = " + bj1.p2[0].hands[0].handTotal);
+
+}
+
+function doubleDownBlackJack()
+{
+	console.log("Double Down BlackJack!");
+
+	bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
+
+    // JAVASCRIPT_DISPLAY	
+	bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
+	console.log("Player total after double = " + bj1.p2[0].hands[0].handTotal);
 
 }
 
@@ -457,6 +690,8 @@ export function executePlayerAction(action: PlayerAction)
 	{
 		case PlayerAction.Deal:
 		{
+			bj1.p2[0].hands[0].handBet = bj1.p2[0].playerBet;
+			bj1.p2[0].bankRoll = bj1.p2[0].bankRoll - bj1.p2[0].playerBet;
 			startBlackJack();
 			break;
 		}
@@ -468,6 +703,15 @@ export function executePlayerAction(action: PlayerAction)
 		case PlayerAction.Stay:
 		{
 			console.log("Stay");
+			break;
+		}
+		case PlayerAction.DoubleDown:
+		{
+			console.log("Double Down");
+			bj1.p2[0].hands[0].handBet = bj1.p2[0].hands[0].handBet + bj1.p2[0].playerBet;
+			bj1.p2[0].bankRoll = bj1.p2[0].bankRoll - bj1.p2[0].playerBet;
+			doubleDownBlackJack();
+			break;
 		}
 	}
 	
