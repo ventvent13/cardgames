@@ -133,7 +133,7 @@ export class Player2
 
 		this.name = playerName;
 		this.role = playerRole;
-		this.pElement = document.createElement("div");
+//		this.pElement = document.createElement("div");
 //		this.hands[0] = pHand;
 	}
 	
@@ -154,6 +154,74 @@ export class Player2
 
 }
 
+// Parent view elements are responsible for appending their child elements into the DOM
+// This will be the player viewer
+// Need to reconcile using element names or object attributes for identifying HTML elements.
+export class Player2View
+{
+	pElement: HTMLDivElement;
+	pPosition!: HTMLDivElement;
+	pName!: HTMLDivElement;
+	player: Player2;
+	constructor(injectPlayer: Player2)
+	{
+		let pId: string = "unset";
+		let pClass: string = "unset"
+		this.player = injectPlayer;
+		
+		if(this.player.role === 1)
+		{
+			pId = "dealer";
+			pClass = "dealer"
+		}
+		else
+		{
+			pId = "player";
+			pClass = "player"
+		}
+		
+		this.pElement = document.createElement("div");
+		this.pElement.setAttribute("id", pId);
+        this.pElement.setAttribute("class", pClass);
+
+        this.pName = document.createElement("p");
+        this.pName.innerHTML = "YYYYYY";
+        this.pElement.appendChild(this.pName);
+
+        if(this.player.role === 0)
+        {
+           let bRollElement = document.createElement("p");
+           bRollElement.setAttribute("id", "p1br");
+           bRollElement.setAttribute("float", "left")
+           bRollElement.innerHTML = "BANKROLL: " + this.player.bankRoll;
+           this.pElement.appendChild(bRollElement);
+        }
+
+        // Dealer area contains the table Position for the cards in the dealer's hand.
+        this.pPosition = document.createElement("div");
+        this.pPosition.setAttribute("id", "ppos1");
+        this.pPosition.setAttribute("class", "position");
+
+        this.pElement.appendChild(this.pPosition);
+
+        if(this.player.role === 0)
+        {
+           let hBetElement = document.createElement("div");
+           hBetElement.setAttribute("id", "p1hb");
+           hBetElement.style.setProperty("float", "left");
+           hBetElement.innerHTML = " HAND BET: ";
+           this.pPosition.appendChild(hBetElement);
+
+           let hWinElement = document.createElement("div");
+           hWinElement.setAttribute("id", "p1hw");
+           //  hWinElement.style.setProperty("float", "left");
+           hWinElement.innerHTML = " HAND WIN: ";
+           this.pPosition.appendChild(hWinElement);
+        }
+	}
+	
+}
+
 
 export class BlackJackGame
 {
@@ -166,6 +234,8 @@ export class BlackJackGame
     dealButton!: HTMLDivElement;
     ddButton!: HTMLDivElement;
     testDeck!: Deck;
+    dealerView: Player2View;
+    playerView: Player2View[] = [];
 	
 	constructor ()
 	{
@@ -173,6 +243,11 @@ export class BlackJackGame
 		this.hState = HandState.NotStarted;
 		this.testDeck = new Deck("BJ1 Deck");
 		this.d2 = new Player2("dealer", 1);
+		this.d2.addHandToPlayer(new PlayerHand());
+		this.dealerView = new Player2View(this.d2);
+		this.p2[0] = new Player2("player", 0);
+		this.p2[0].addHandToPlayer(new PlayerHand());
+		this.playerView[0] = new Player2View(this.p2[0]);
 	}
 	
 	dealCard(pHand: PlayerHand, cFace: CardFaceDirection)
@@ -288,120 +363,37 @@ export let bj1: BlackJackGame;
 function createBlackJackGame()
 {
 
-//  bj1.testDeck = new Deck("BJ1 Deck");
-
-/* Moved to constructor
-  bj1.d2 = new Player2("dealer", 1);
-*/
-
-  // Begin JAVASCRIPT_DISPLAY
-  // Table contains a dealer area.
-// Create player position element for Dealer
+if(jsImpl)
 {
-/* Moved to Player constructor
-  bj1.d2.pElement = document.createElement("div");
-*/
-  bj1.d2.pElement.setAttribute("id", "dealer");
-  bj1.d2.pElement.setAttribute("class", "dealer");
-//  bj1.d2.pElement.innerHTML = bj1.d2.name;
+  document.body.appendChild(bj1.dealerView.pElement);
 }
+
+//    bj1.d2.addHandToPlayer(new PlayerHand());
+    bj1.d2.hands[0].addDisplayPosition(bj1.dealerView.pPosition);
 
 if(jsImpl)
 {
-  document.body.appendChild(bj1.d2.pElement);
+  document.body.appendChild(bj1.playerView[0].pElement);
 }
 
-  bj1.d2.pName = document.createElement("p");
-  bj1.d2.pName.innerHTML = "YYYYYY";
-  bj1.d2.pElement.appendChild(bj1.d2.pName);
 
-  // Dealer area contains the table Position for the cards in the dealer's hand.
-  bj1.d2.pPosition = document.createElement("div");
-  bj1.d2.pPosition.setAttribute("id", "ppos1");
-  bj1.d2.pPosition.setAttribute("class", "position");
+//    bj1.p2[0].addHandToPlayer(new PlayerHand());
+    bj1.p2[0].hands[0].addDisplayPosition(bj1.playerView[0].pPosition);
 
-  bj1.d2.pElement.appendChild(bj1.d2.pPosition);
 
-  let dpTitle = document.createElement("p");
-  dpTitle.innerHTML = "DEALER POSITION";
-//  bj1.d2.pPosition.appendChild(dpTitle);
-  // End JAVASCRIPT_DISPLAY
 
-let dHand: PlayerHand = new PlayerHand();
-    dHand.addDisplayPosition(bj1.d2.pPosition);
-    bj1.d2.addHandToPlayer(dHand);
-
-  bj1.p2[0] = new Player2("player", 0);
-
-  // Begin JAVASCRIPT_DISPLAY
-  // Table also contains the player area.
-// Create player position element for player - Should be fully moved to constructor
-{
-/* Moved to constructor
-  bj1.p2[0].pElement = document.createElement("div");
-*/
-  bj1.p2[0].pElement.setAttribute("id", "player1");
-  bj1.p2[0].pElement.setAttribute("class", "player");
-//  bj1.p2[0].pElement.innerHTML = bj1.p2[0].name;
-}
-
-if(jsImpl)
-{
-  document.body.appendChild(bj1.p2[0].pElement);
-}
-
-  bj1.p2[0].pName = document.createElement("p");
-  bj1.p2[0].pName.innerHTML = "XXXXXX";
-  bj1.p2[0].pElement.appendChild(bj1.p2[0].pName);
-
-  let bRollElement = document.createElement("p");
-  bRollElement.setAttribute("id", "p1br");
-  bRollElement.setAttribute("float", "left")
-  bRollElement.innerHTML = "BANKROLL: " + bj1.p2[0].bankRoll;
-  bj1.p2[0].pElement.appendChild(bRollElement);
-
-  // Player area contains the table Position for the cards in the player's hand.
-  bj1.p2[0].pPosition = document.createElement("div");
-  bj1.p2[0].pPosition.setAttribute("id", "ppos1");
-  bj1.p2[0].pPosition.setAttribute("class", "position");
-
-  bj1.p2[0].pElement.appendChild(bj1.p2[0].pPosition);
-
-  let ppTitle = document.createElement("p");
-  ppTitle.innerHTML = "PLAYER1 POSITION";
-//  bj1.p2[0].pPosition.appendChild(ppTitle);
-
-  
-  let hBetElement = document.createElement("div");
-  hBetElement.setAttribute("id", "p1hb");
-  hBetElement.style.setProperty("float", "left");
-  hBetElement.innerHTML = " HAND BET: ";
-  bj1.p2[0].pPosition.appendChild(hBetElement);
-
-  let hWinElement = document.createElement("div");
-  hWinElement.setAttribute("id", "p1hw");
-//  hWinElement.style.setProperty("float", "left");
-  hWinElement.innerHTML = " HAND WIN: ";
-  bj1.p2[0].pPosition.appendChild(hWinElement);
-  // End JAVASCRIPT_DISPLAY
-
-let pHand: PlayerHand = new PlayerHand();
-    pHand.addDisplayPosition(bj1.p2[0].pPosition);
-    bj1.p2[0].addHandToPlayer(pHand);
-
-  // Begin JAVASCRIPT_DISPLAY
   bj1.createHitButton();
-  bj1.p2[0].pElement.appendChild(bj1.hitButton);
+  bj1.playerView[0].pElement.appendChild(bj1.hitButton);
 
   bj1.createStayButton();
-  bj1.p2[0].pElement.appendChild(bj1.stayButton);
+  bj1.playerView[0].pElement.appendChild(bj1.stayButton);
 
   bj1.createDDButton();
-  bj1.p2[0].pElement.appendChild(bj1.ddButton);
+  bj1.playerView[0].pElement.appendChild(bj1.ddButton);
 
   bj1.createDealButton();
-  bj1.p2[0].pElement.appendChild(bj1.dealButton);
-  // End JAVASCRIPT_DISPLAY
+  bj1.playerView[0].pElement.appendChild(bj1.dealButton);
+
 }
 
 function startBlackJack()
@@ -417,13 +409,15 @@ function startBlackJack()
 
     // JAVASCRIPT_DISPLAY - The handTotal display should be updated in the hand portion of the display, not the player portioin
     // And the display update could be moved to the location in the hand where the total is calculated.
-    bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
-
+ //   bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
+    bj1.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
     bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
 
     // JAVASCRIPT_DISPLAY - The handTotal display should be updated in the hand portion of the display, not the player portioin
     // And the display update could be moved to the location in the hand where the total is calculated.
-    bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+//    bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+
+    bj1.dealerView.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
 
     bj1.hState = HandState.PostDeal;
     // Do Post Deal Activities;
@@ -476,11 +470,13 @@ bj1.p2[0].removeHandFromPlayer();
 let dHand: PlayerHand = new PlayerHand();
     dHand.handTotal = 0;
     dHand.addDisplayPosition(bj1.d2.pPosition);
+    dHand.addDisplayPosition(bj1.dealerView.pPosition);
     bj1.d2.addHandToPlayer(dHand);
 
 let pHand: PlayerHand = new PlayerHand();
     pHand.handTotal = 0;
     pHand.addDisplayPosition(bj1.p2[0].pPosition);
+    pHand.addDisplayPosition(bj1.playerView[0].pPosition);
     bj1.p2[0].addHandToPlayer(pHand);
 
     }
@@ -574,7 +570,10 @@ bj1.d2.hands[0].cards[0].direction = CardFaceDirection.Up;
          bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
 
          // JAVASCRIPT DISPLAY
-         bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+//         bj1.d2.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+
+         bj1.dealerView.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+
       }
 
 	}
@@ -652,7 +651,8 @@ function evaluateHand()
     }
 
     // JAVASCRIPT_DISPLAY
-    bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
+//    bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
+    bj1.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
 /* Comment these three lines out for React...for now */
     document.getElementById("p1br").innerHTML = " BANKROLL: " + bj1.p2[0].bankRoll;
     document.getElementById("p1hb").innerHTML = " HAND BET: " + bj1.p2[0].hands[0].handBet;
@@ -666,7 +666,7 @@ function hitBlackJack()
 	bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
 
     // JAVASCRIPT_DISPLAY	
-	bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
+	bj1.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
 	console.log("Player total after hit = " + bj1.p2[0].hands[0].handTotal);
 
 }
@@ -678,7 +678,7 @@ function doubleDownBlackJack()
 	bj1.dealCard(bj1.p2[0].hands[0], CardFaceDirection.Up);
 
     // JAVASCRIPT_DISPLAY	
-	bj1.p2[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
+	bj1.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal;
 	console.log("Player total after double = " + bj1.p2[0].hands[0].handTotal);
 
 }
