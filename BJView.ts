@@ -5,19 +5,79 @@
 /* Remove '.js' for React */
 import {Card2, numSuits, numValues, cardValues, suits, initializeCardData, CardFaceDirection,CardValue} from "./Card2.js"
 import {Deck} from "./Deck.js"
-import{BlackJackGame, bj1, Player2, HandState, PlayerAction, executeHand} from "./Cards.js"
+import{BlackJackGame, bj1, Player2, HandState, PlayerAction, executeHand, RoundState, PlayerHand} from "./Cards.js"
 
+class HandView implements bar3
+{
+	hPosition: HTMLDivElement;
+	hand: PlayerHand;
+	hTotal: HTMLDivElement;
+	hBet: HTMLDivElement;
+	hWin: HTMLDivElement;
+	
+	constructor(injectHand: PlayerHand)
+	{
+		this.hand = injectHand;
+		
+        // Dealer area contains the table Position for the cards in the dealer's hand.
+        this.hPosition = document.createElement("div");
+        this.hPosition.setAttribute("id", "ppos1");
+        this.hPosition.setAttribute("class", "position");
+	}
+	
+	test(thisArg: bar3): void
+    {
+	let thisCastArg = thisArg as Player2View;
+	console.log("bar3 1");
+	   let newCard: Card2 = this.hand.cards[this.hand.cards.length - 1];
+	   if(newCard.direction == CardFaceDirection.Up)
+       {
+          newCard.el.innerHTML = newCard.cardRepString;
+       }
+       else
+       {
+	      newCard.el.innerHTML = '\u{1f0a0}';
+       }
 
+//		this.pPosition[0].appendChild(newCard.el);
+//		this.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+		
+		this.hPosition.appendChild(newCard.el);
+
+    }
+
+    setDealerHoleCardDirection(thisArg: bar3): void
+    {
+	   console.log("setDealerHoleCardDirection");
+       if(this.hand.cards[0].direction == CardFaceDirection.Up)
+       {
+          this.hand.cards[0].el.innerHTML = this.hand.cards[0].cardRepString;
+       }
+       else
+       {
+	      this.hand.cards[0].el.innerHTML = '\u{1f0a0}';
+       }
+    }
+
+    cardRemovedFromHand(removedCard: Card2): void
+    {
+	   console.log("cardRemovedFromHand");
+//       this.pPosition[0].removeChild(removedCard.el);
+       this.hPosition.removeChild(removedCard.el);
+    }
+}
 
 // Parent view elements are responsible for appending their child elements into the DOM
 // This will be the player viewer
 // Need to reconcile using element names or object attributes for identifying HTML elements.
-export class Player2View implements bar3
+export class Player2View
 {
 	pElement: HTMLDivElement;
-	pPosition!: HTMLDivElement;
+	pPosition: HTMLDivElement[] = [];  // Needs to be an array, 1 for each hand
 	pName!: HTMLDivElement;
 	player: Player2;
+	hView: HandView[] = [];
+	
 	constructor(injectPlayer: Player2)
 	{
 		let pId: string = "unset";
@@ -52,34 +112,52 @@ export class Player2View implements bar3
            this.pElement.appendChild(bRollElement);
         }
 
-        // Dealer area contains the table Position for the cards in the dealer's hand.
-        this.pPosition = document.createElement("div");
-        this.pPosition.setAttribute("id", "ppos1");
-        this.pPosition.setAttribute("class", "position");
+        this.hView[0] = new HandView(this.player.hands[0]);
+        this.pElement.appendChild(this.hView[0].hPosition);
 
-        this.pElement.appendChild(this.pPosition);
+        // Hard code 2 player hands
+        if(this.player.role === 0)
+        {
+           this.hView[1] = new HandView(this.player.hands[1]);
+           this.pElement.appendChild(this.hView[1].hPosition);
+        }
 
         if(this.player.role === 0)
         {
+	       let i = 0;
+           for(i = 0; i < this.hView.length; i++)
+           {
            let hBetElement = document.createElement("div");
            hBetElement.setAttribute("id", "p1hb");
            hBetElement.style.setProperty("float", "left");
            hBetElement.innerHTML = " HAND BET: ";
-           this.pPosition.appendChild(hBetElement);
+           this.hView[i].hBet = hBetElement;
+           this.hView[i].hPosition.appendChild(hBetElement);
 
            let hWinElement = document.createElement("div");
            hWinElement.setAttribute("id", "p1hw");
            //  hWinElement.style.setProperty("float", "left");
            hWinElement.innerHTML = " HAND WIN: ";
-           this.pPosition.appendChild(hWinElement);
+           this.hView[i].hWin = hWinElement;
+           this.hView[i].hPosition.appendChild(hWinElement);
+
+           let hTotalElement = document.createElement("div");
+           hTotalElement.setAttribute("id", "p1hw");
+           //  hWinElement.style.setProperty("float", "left");
+           hTotalElement.innerHTML = " TOTAL: ";
+           this.hView[i].hTotal = hTotalElement;
+           this.hView[i].hPosition.appendChild(hTotalElement);
+           }
         }
-	}
-	
-	public func(this: Player2View): void
-	{
-		console.log("In the class instance callback");
-		let newCard: Card2 = this.player.hands[0].cards[this.player.hands[0].cards.length - 1];
-		this.pPosition.appendChild(newCard.el);
+        else
+        {
+           let hTotalElement = document.createElement("div");
+           hTotalElement.setAttribute("id", "p1hw");
+           //  hWinElement.style.setProperty("float", "left");
+           hTotalElement.innerHTML = " TOTAL: ";
+           this.hView[0].hTotal = hTotalElement;
+           this.hView[0].hPosition.appendChild(hTotalElement);	
+        }
 	}
 	
 	test(thisArg: bar3): void
@@ -96,14 +174,18 @@ export class Player2View implements bar3
 	      newCard.el.innerHTML = '\u{1f0a0}';
        }
 
-		this.pPosition.appendChild(newCard.el);
+//		this.pPosition[0].appendChild(newCard.el);
 		this.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
+		
+		this.hView[0].hPosition.appendChild(newCard.el);
 
     }
 
     setDealerHoleCardDirection(thisArg: bar3): void
     {
 	   console.log("setDealerHoleCardDirection");
+       this.hView[0].setDealerHoleCardDirection(thisArg);
+/*
        if(this.player.hands[0].cards[0].direction == CardFaceDirection.Up)
        {
           this.player.hands[0].cards[0].el.innerHTML = this.player.hands[0].cards[0].cardRepString;
@@ -112,12 +194,14 @@ export class Player2View implements bar3
        {
 	      this.player.hands[0].cards[0].el.innerHTML = '\u{1f0a0}';
        }
+*/
     }
 
     cardRemovedFromHand(removedCard: Card2): void
     {
 	   console.log("cardRemovedFromHand");
-       this.pPosition.removeChild(removedCard.el);
+//       this.pPosition[0].removeChild(removedCard.el);
+       this.hView[0].hPosition.removeChild(removedCard.el);
     }
 	
 }
@@ -127,33 +211,12 @@ function bar(callbackFn: (this: Player2View) => any, thisArg: Player2View): any
 	return callbackFn.call(thisArg);
 }
 
-function bar2(thisArg: object): any
-{
-	let thisCastArg = thisArg as Player2View;
-	return thisCastArg.func.call(thisCastArg);
-}
-
 interface bar3
 {
 	test(thisArg: bar3): void;
 	setDealerHoleCardDirection(thisArg: bar3): void;
 	cardRemovedFromHand(removedCard: Card2): void;
-}
-
-interface addCardInView
-{
-	(message: string) : void;
 }	
-
-function sayHi(callback: addCardInView)
-{
-	callback("ADDING CARD IN VIEW");
-}
-
-function testCallBack(message: string) : void
-{
-	console.log(message);
-}
 
 class BlackJackView
 {
@@ -185,21 +248,27 @@ class BlackJackView
 	updateViewState()
 	{
     this.dealerView.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
-    this.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
+//    this.playerView[0].pName.textContent = bj1.p2[0].name + ": " + bj1.p2[0].hands[0].handTotal + "-" + bj1.p2[0].hands[0].handResult;
     document.getElementById("p1br").innerHTML = " BANKROLL: " + bj1.p2[0].bankRoll;
-    document.getElementById("p1hb").innerHTML = " HAND BET: " + bj1.p2[0].hands[0].handBet;
-    document.getElementById("p1hw").innerHTML = " HAND WIN: " + bj1.p2[0].hands[0].handWin;
-              if(bj1.hState == HandState.DealerActive  || bj1.hState == HandState.Complete || bj1.hState == HandState.PreDeal)
+
+    let i: number = 0;
+    for(i = 0; i < this.playerView[0].hView.length; i++)
+    {
+       this.playerView[0].hView[i].hBet.innerHTML = " HAND BET: " + bj1.p2[0].hands[i].handBet;
+       this.playerView[0].hView[i].hWin.innerHTML = " HAND WIN: " + bj1.p2[0].hands[i].handWin;
+       this.playerView[0].hView[i].hTotal.innerHTML = " TOTAL: " + bj1.p2[0].hands[i].handTotal + "-" + bj1.p2[0].hands[i].handResult;
+    }
+              if(bj1.rState == RoundState.DealerActive  || bj1.rState == RoundState.ActionComplete || bj1.rState == RoundState.PreDeal)
               { 
               this.disableHitButton();
               this.disableStayButton();
               this.disableDDButton();	
               }	
-              if(bj1.hState == HandState.PreDeal)
+              if(bj1.rState == RoundState.PreDeal)
               {
 	             this.enableDealButton();
               }
-              if(bj1.hState == HandState.PlayerActive)
+              if(bj1.rState == RoundState.PlayersActive)
               {
 	             this.disableDealButton();
               this.enableHitButton();
@@ -315,26 +384,22 @@ class BlackJackView
 // Really just finishing up the BlackJackView initialization.
 function createBlackJackGame()
 {
+   document.body.appendChild(bj1view.dealerView.pElement);
+   bj1.d2.hands[0].addCallbackObject(bj1view.dealerView);   // Should be moved to the handView
+
+   let i: number = 0;  //This needs to be hands, not players
+   let j: number = 0;
+   for(i = 0; i < bj1view.playerView.length; i++)
+   {
+      document.body.appendChild(bj1view.playerView[i].pElement);
+      for(j = 0; j < bj1view.playerView[i].hView.length; j++)
+      {
+         bj1.p2[i].hands[j].addCallbackObject(bj1view.playerView[i].hView[j]);
+      }
+   }
 
 
-  document.body.appendChild(bj1view.dealerView.pElement);
-
-
-//    bj1.d2.addHandToPlayer(new PlayerHand());
-//    bj1.d2.hands[0].addDisplayPosition(bj1view.dealerView.pPosition);
-    bj1.d2.hands[0].addCallbackObject(bj1view.dealerView);
-
-
-  document.body.appendChild(bj1view.playerView[0].pElement);
-
-
-
-//    bj1.p2[0].addHandToPlayer(new PlayerHand());
-//    bj1.p2[0].hands[0].addDisplayPosition(bj1view.playerView[0].pPosition);
-    bj1.p2[0].hands[0].addCallbackObject(bj1view.playerView[0]);
-
-
-
+  // Leave action buttons with player 1 for now.
   bj1view.createHitButton();
   bj1view.playerView[0].pElement.appendChild(bj1view.hitButton);
 
