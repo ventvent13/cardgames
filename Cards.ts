@@ -5,6 +5,7 @@
 /* Remove '.js' for React */
 import {Card2, numSuits, numValues, cardValues, suits, initializeCardData, CardFaceDirection,CardValue} from "./Card2.js"
 import {Deck} from "./Deck.js"
+import {bj1view} from "./BJView.js"
 
 // Test Comment
 
@@ -15,7 +16,8 @@ export enum PlayerAction
 	Hit,
 	Stay,
 	DoubleDown,
-	InitiateBlackJackView
+	InitiateBlackJackView,
+	DealerAction
 }
 
 export enum HandState
@@ -299,7 +301,8 @@ function startBlackJack()
 
 function processDealerBlackJack(): void
 {
-			// Really need to loop through all players and all hands
+		// Really need to loop through all players and all hands
+		// TODO
 		bj1.hState = HandState.Complete;
 		bj1.p2[0].hands[0].hState = HandState.Complete;
 		bj1.rState = RoundState.ActionComplete;
@@ -325,41 +328,67 @@ function playerHandAlive(): boolean
 	return alive;
 }
 
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+
+let dealerFirstTime: boolean = false;
+
 function processDealerActive(): void
 {
-	bj1.d2.hands[0].turnHoleCardUp();
-	if(playerHandAlive())
-	{
-    while(bj1.rState === RoundState.DealerActive)
-	{
+	
+   if(dealerFirstTime)
+   {
+      setTimeout(function () 
+      {
+         executeHand(PlayerAction.DealerAction);dealerFirstTime = false;
+      }, 1000);
+	 bj1.d2.hands[0].turnHoleCardUp();
+   }
+   else
+   {
+	  if(playerHandAlive())
+	  {
+//    while(bj1.rState === RoundState.DealerActive)
+//	{
       // Dealer Active
-      if(bj1.d2.hands[0].handTotal >= 17)
-      {
-	    let i:number = 0;
-        // Set player hands which haven't been paid to Complete so that they will be processed - we could just pay them here.
-        for(i = 0; i < bj1.p2[0].hands.length; i++)
-        {
-	       if(bj1.p2[0].hands[i].hState != HandState.PlayerPaid)
-           {
-              bj1.p2[0].hands[i].hState = HandState.Complete;		
-           }
+         if(bj1.d2.hands[0].handTotal >= 17)
+         {
+	     let i:number = 0;
+         // Set player hands which haven't been paid to Complete so that they will be processed - we could just pay them here.
+            for(i = 0; i < bj1.p2[0].hands.length; i++)
+            {
+	           if(bj1.p2[0].hands[i].hState != HandState.PlayerPaid)
+               {
+                  bj1.p2[0].hands[i].hState = HandState.Complete;		
+               }
 
-        }
-        bj1.hState = HandState.Complete;
-        bj1.rState = RoundState.ActionComplete;
-      }
-      else
-      {
-         bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
-      }
+            }
+            bj1.hState = HandState.Complete;
+            bj1.rState = RoundState.ActionComplete;
+         }
+         else
+         {
 
-	}
-	}
-	else
-	{
-		bj1.hState = HandState.Complete;
-		bj1.rState = RoundState.ActionComplete
-	}
+            bj1.dealCard(bj1.d2.hands[0], CardFaceDirection.Up);
+      setTimeout(function () 
+      {
+         executeHand(PlayerAction.DealerAction);dealerFirstTime = false;
+      }, 1000);
+         }
+
+//	}
+	   }
+	   else
+	   {
+		  bj1.hState = HandState.Complete;
+		  bj1.rState = RoundState.ActionComplete
+	   }
+   }
 }
 
 function updateHand(): boolean
@@ -405,7 +434,7 @@ export function executeHand(action: PlayerAction)
 		case GameState.Uninitialized:
 		   initializeCardData();
            bj1.hState = HandState.PreDeal;
-           bj1.p2[0].hands[0].hState = HandState.PreDeal;
+//           bj1.p2[0].hands[0].hState = HandState.PreDeal;
            bj1.rState = RoundState.PreDeal;
            bj1.gState = GameState.Ready;
            break;
@@ -431,7 +460,7 @@ export function executeHand(action: PlayerAction)
                 bj1.d2.removeHandFromPlayer();
                 bj1.p2[0].removeHandsFromPlayer();
              }
-
+dealerFirstTime = true;
               bj1.testDeck.createDeck();
               bj1.testDeck.shuffleDeck();
 
@@ -447,6 +476,7 @@ export function executeHand(action: PlayerAction)
 	          startBlackJack();
               bj1.p2[0].activeHand = 0;
 
+              // Post Deal activity - check for dealer black jack and if not find the first active player hand, processing black jacks along the way.
               bj1.rState = RoundState.PostDeal;
               if(bj1.d2.hands[0].handTotal === 21) // Dealer Black Jack
               { 
@@ -455,7 +485,7 @@ export function executeHand(action: PlayerAction)
               {
 	             while(updateHand() && bj1.rState == RoundState.PostDeal)
                  {
-	                if (bj1.p2[0].hands[bj1.p2[0].activeHand].handTotal === 21)
+	                if (bj1.p2[0].hands[bj1.p2[0].activeHand].handTotal === 21  && bj1.p2[0].hands[bj1.p2[0].activeHand].cards.length == 2)
                     {
 	                   bj1.hState = HandState.Complete;
                        bj1.p2[0].hands[bj1.p2[0].activeHand].hState = HandState.PlayerBlackJack;
@@ -514,10 +544,12 @@ export function executeHand(action: PlayerAction)
              break;
           }
 
+          // Find next hand which is not a black jack, and process any black jacks found on the way because they don't require player action
+          // Although, I suppose they really require the player to stay because he could double down or something.
           let newActiveHandisBJ: boolean = true;
           while(updateHand() && newActiveHandisBJ)
           {
-	         if(bj1.p2[0].hands[bj1.p2[0].activeHand].handTotal === 21)
+	         if(bj1.p2[0].hands[bj1.p2[0].activeHand].handTotal === 21 && bj1.p2[0].hands[bj1.p2[0].activeHand].cards.length == 2)
 	         {
 		        newActiveHandisBJ = true;
 	            bj1.hState = HandState.Complete;
@@ -530,6 +562,7 @@ export function executeHand(action: PlayerAction)
              }
           }
 
+          // This just sets the RoundState
           if(updateHand())
           {
 	         console.log("Player hands remain to be actioned...");
@@ -571,6 +604,7 @@ export function executeHand(action: PlayerAction)
         }
 		bj1.hState = HandState.PreDeal;
 		bj1.rState = RoundState.PreDeal;
+		bj1view.updateViewState();
     }
 }
 
