@@ -4,25 +4,34 @@
 .card {
   background-color: lightgrey;
   width: 75px;
-  border: 10px solid green;
-  padding: 15px 0px 15px 0px;
+  border: 10px solid red;
+  padding: 0px 0px 0px 0px;
   margin: 5px 5px 0px 0px;
   float: left;
   text-align: center;
+  font-size: 5em;
 }
 
 .dealer {
-  width: 1330px;
-  border: 10px solid blue;
+  width: 665px;
+  border: 10px;
   padding: 15px 0px 15px 0px;
-  margin: 5px 5px 0px 0px;
-  float: left;
+  margin: auto;
+  text-align: center;
+}
+
+.dealer-position {
+  width: 600px;
+  border: 10px;
+  padding: 15px 0px 15px 0px;
+  margin: 5px 5px 5px 5px;
+  float: auto;
   text-align: center;
 }
 
 .player {
   width: 1330px;
-  border: 10px solid blue;
+  border: 10px;
   padding: 15px 0px 15px 0px;
   margin: 5px 5px 0px 0px;
   float: left;
@@ -30,8 +39,8 @@
 }
 
 .position {
-  width: 1300px;
-  border: 10px solid red;
+  width: 600px;
+  border: 10px;
   padding: 15px 0px 15px 0px;
   margin: 5px 5px 5px 5px;
   float: left;
@@ -65,6 +74,12 @@
   cursor: pointer;
   float: left;
   opacity: 0.6;
+}
+
+body {
+  background-image: url("newtable3to2_2.png");
+  background-repeat: no-repeat, repeat;
+  background-color: #cccccc;
 }
 
 
