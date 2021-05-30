@@ -14,15 +14,24 @@ class HandView implements bar3
 	hTotal: HTMLDivElement;
 	hBet: HTMLDivElement;
 	hWin: HTMLDivElement;
+	role: number;
 	
-	constructor(injectHand: PlayerHand)
+	constructor(injectHand: PlayerHand, role: number)
 	{
 		this.hand = injectHand;
+		this.role = role;
 		
         // Dealer area contains the table Position for the cards in the dealer's hand.
         this.hPosition = document.createElement("div");
         this.hPosition.setAttribute("id", "ppos1");
-        this.hPosition.setAttribute("class", "position");
+        if(role == 0)
+        {
+           this.hPosition.setAttribute("class", "position");
+        }
+        else
+        {
+	       this.hPosition.setAttribute("class", "dealer-position");
+        }
 	}
 	
 	test(thisArg: bar3): void
@@ -43,6 +52,11 @@ class HandView implements bar3
 //		this.pName.textContent = bj1.d2.name + ": " + bj1.d2.hands[0].handTotal;
 		
 		this.hPosition.appendChild(newCard.el);
+			var top = this.hand.cards[0].el.offsetTop;
+			this.hand.cards[0].el.style.left = 0;
+			top = this.hand.cards[0].el.offsetTop;
+			this.hand.cards[0].el.style.top = 0;
+			top = this.hand.cards[0].el.offsetTop;
 
     }
 
@@ -57,6 +71,8 @@ class HandView implements bar3
        {
 	      this.hand.cards[0].el.innerHTML = '\u{1f0a0}';
        }
+	window.getComputedStyle(this.hand.cards[0].el);
+	var top = this.hand.cards[0].el.offsetTop;
     }
 
     cardRemovedFromHand(removedCard: Card2): void
@@ -112,13 +128,13 @@ export class Player2View
            this.pElement.appendChild(bRollElement);
         }
 
-        this.hView[0] = new HandView(this.player.hands[0]);
+        this.hView[0] = new HandView(this.player.hands[0], this.player.role);
         this.pElement.appendChild(this.hView[0].hPosition);
 
         // Hard code 2 player hands
         if(this.player.role === 0)
         {
-           this.hView[1] = new HandView(this.player.hands[1]);
+           this.hView[1] = new HandView(this.player.hands[1], this.player.role);
            this.pElement.appendChild(this.hView[1].hPosition);
         }
 
@@ -257,6 +273,14 @@ class BlackJackView
        this.playerView[0].hView[i].hBet.innerHTML = " HAND BET: " + bj1.p2[0].hands[i].handBet;
        this.playerView[0].hView[i].hWin.innerHTML = " HAND WIN: " + bj1.p2[0].hands[i].handWin;
        this.playerView[0].hView[i].hTotal.innerHTML = " TOTAL: " + bj1.p2[0].hands[i].handTotal + "-" + bj1.p2[0].hands[i].handResult;
+       if(bj1.rState == RoundState.PlayersActive && this.playerView[0].player.activeHand == i)
+       {
+//	      this.playerView[0].hView[i].hPosition.style.backgroundColor = "lightblue";
+       } else
+       {
+//	      this.playerView[0].hView[i].hPosition.style.backgroundColor = "green";
+       }
+
     }
               if(bj1.rState == RoundState.DealerActive  || bj1.rState == RoundState.ActionComplete || bj1.rState == RoundState.PreDeal)
               { 
@@ -401,16 +425,20 @@ function createBlackJackGame()
 
   // Leave action buttons with player 1 for now.
   bj1view.createHitButton();
-  bj1view.playerView[0].pElement.appendChild(bj1view.hitButton);
+  document.body.appendChild(bj1view.hitButton);
+//  bj1view.playerView[0].pElement.appendChild(bj1view.hitButton);
 
   bj1view.createStayButton();
-  bj1view.playerView[0].pElement.appendChild(bj1view.stayButton);
+  document.body.appendChild(bj1view.stayButton);
+//  bj1view.playerView[0].pElement.appendChild(bj1view.stayButton);
 
   bj1view.createDDButton();
-  bj1view.playerView[0].pElement.appendChild(bj1view.ddButton);
+  document.body.appendChild(bj1view.ddButton);
+//  bj1view.playerView[0].pElement.appendChild(bj1view.ddButton);
 
   bj1view.createDealButton();
-  bj1view.playerView[0].pElement.appendChild(bj1view.dealButton);
+  document.body.appendChild(bj1view.dealButton);
+//  bj1view.playerView[0].pElement.appendChild(bj1view.dealButton);
 
 }
 
@@ -421,7 +449,7 @@ declare global {
     }
 }
 
-let bj1view: BlackJackView;
+export let bj1view: BlackJackView;
 	let firstTime: boolean = true;  // This should really be another PlayerAction state.
 window.play3 = function (type: PlayerAction)
 {
